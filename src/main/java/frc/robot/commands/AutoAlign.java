@@ -12,180 +12,206 @@ import frc.robot.LimelightHelpers;
 import frc.robot.subsystems.DriveSubsystem;
 
 public class AutoAlign extends Command {
-  private PIDController distanceController, heightController, rotationController;
-  private boolean isRightScore;
-  private Timer dontSeeTagTimer, stopTimer;
-  private DriveSubsystem m_robotDrive;
-  private double tagID = -1;
 
-  public AutoAlign(boolean isRightScore, DriveSubsystem m_robotDrive) {
-    distanceController = new PIDController(2.5, 0.0, 0);  
-    heightController = new PIDController(2, 0.0, 0); 
-    rotationController = new PIDController(1, 0, 0);  
-    this.isRightScore = isRightScore;
-    this.m_robotDrive = m_robotDrive;
-    addRequirements(m_robotDrive);
-  }
+    // --- Dependencies and Controllers ---
+    private final DriveSubsystem m_robotDrive;
+    private final PIDController distanceController; // Controls forward/backward (Z-axis in target space)
+    private final PIDController strafeController;   // Controls left/right (X-axis in target space)
+    private final PIDController rotationController; // Controls rotation (Yaw-axis in target space)
 
-  @Override
-  public void initialize() {
-    this.stopTimer = new Timer();
-    this.stopTimer.start();
-    this.dontSeeTagTimer = new Timer();
-    this.dontSeeTagTimer.start();
+    // --- Target Values & Tolerances (Mostly Unchanged) ---
+    // TODO: Tune TARGET_DISTANCE_METERS based on your robot and goal
+    private final double TARGET_DISTANCE_METERS = 0.2413;
+    private final double TARGET_STRAFE_METERS = 0.0;   // Target horizontal centering
+    private final double TARGET_ROTATION_DEG = 0.0;    // Target parallel alignment
 
-    rotationController.setSetpoint(0.05);
-    rotationController.setTolerance(0.5);
+    // TODO: Tune these tolerances
+    private final double DISTANCE_TOLERANCE_METERS = 0.05;
+    private final double STRAFE_TOLERANCE_METERS = 0.05;
+    private final double ROTATION_TOLERANCE_DEG = 2.0;
 
-    distanceController.setSetpoint(0.05);
-    distanceController.setTolerance(0.05);
+    // --- Timers & Timing Constants (Unchanged) ---
+    private final Timer timerAtGoal = new Timer();
+    private final Timer timerLostTarget = new Timer();
+    private final double TIME_AT_GOAL_SECONDS = 0.3;
+    private final double LOST_TARGET_TIMEOUT_SECONDS = 0.75;
 
-    heightController.setSetpoint(isRightScore ? 0.05 : -0.05);
-    heightController.setTolerance(1);
+    // --- State Variables ---
+    private boolean hasSeenValidTargetOnce = false; // Renamed for clarity
 
-    tagID = LimelightHelpers.getFiducialID("");
-  }
+    // --- Valid Tag ID Range ---
+    private final int MIN_VALID_TAG_ID = 6;
+    private final int MAX_VALID_TAG_ID = 22;
 
-  @Override
-  public void execute() {
-    if (LimelightHelpers.getTV("") && LimelightHelpers.getFiducialID("") == tagID) {
-      this.dontSeeTagTimer.reset();
 
-      double[] postions = LimelightHelpers.getBotPose_TargetSpace("");
-      SmartDashboard.putNumber("x", postions[2]);
+    /**
+     * Constructor: Aligns to the first valid AprilTag (ID 6-22) seen by the Limelight.
+     *
+     * @param robotDrive The DriveSubsystem dependency.
+     */
+    public AutoAlign(DriveSubsystem robotDrive) {
+        m_robotDrive = robotDrive;
 
-      double xSpeed = distanceController.calculate(postions[2]);
-      SmartDashboard.putNumber("xspee", xSpeed);
-      double ySpeed = -heightController.calculate(postions[0]);
-      double rotValue = -rotationController.calculate(postions[4]);
+        // TODO: Tune these PID constants (P, I, D) vigorously!
+        distanceController = new PIDController(2.0, 0.0, 0.05);
+        distanceController.setSetpoint(TARGET_DISTANCE_METERS);
+        distanceController.setTolerance(DISTANCE_TOLERANCE_METERS);
 
-      m_robotDrive.drive(xSpeed, ySpeed, rotValue, false);
+        strafeController = new PIDController(2.0, 0.0, 0.05);
+        strafeController.setSetpoint(TARGET_STRAFE_METERS);
+        strafeController.setTolerance(STRAFE_TOLERANCE_METERS);
 
-      if (!rotationController.atSetpoint() ||
-          !heightController.atSetpoint() ||
-          !distanceController.atSetpoint()) {
-        stopTimer.reset();
-      }
-    } else {
-      m_robotDrive.drive(1, 1, 0, false);
+        rotationController = new PIDController(0.05, 0.0, 0.001);
+        rotationController.setSetpoint(TARGET_ROTATION_DEG);
+        rotationController.setTolerance(ROTATION_TOLERANCE_DEG);
+
+        addRequirements(m_robotDrive);
     }
 
-    SmartDashboard.putNumber("poseValidTimer", stopTimer.get());
-  }
-
-  @Override
-  public void end(boolean interrupted) {
-    m_robotDrive.drive(0, 0, 0, false);
-  }
-
-  @Override
-  public boolean isFinished() {
-    // Requires the robot to stay in the correct position for 0.3 seconds, as long as it gets a tag in the camera
-    return this.dontSeeTagTimer.hasElapsed(0.3) ||
-        stopTimer.hasElapsed(0.3);
-  }
-}
-
-  /*  private final DriveSubsystem m_swerve;
-    private final NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
-
-    private final PIDController rotationPID = new PIDController(1.0, 0, 0);
-    private final PIDController distancePID = new PIDController(2.5, 0.0, 0.2); 
-    private final PIDController headingPID = new PIDController(2, 0, 0); 
-
-    private final double rotationTolerance = 0.5; // Degrees
-    private final double distanceTolerance = 0.05; // Meters
-    private final double headingTolerance = 1.0; // Degrees
-
-    private final double limelightHeight = Constants.LimelightConstants.MOUNT_HEIGHT;
-    private final double limelightAngle = Constants.LimelightConstants.MOUNT_ANGLE;
-    
-    public AutoAlign(DriveSubsystem swerve) {
-        m_swerve = swerve;
-        addRequirements(m_swerve);
-    }
 
     @Override
     public void initialize() {
-        rotationPID.setSetpoint(0);
-        distancePID.setSetpoint(0.5); 
-       this.m_robotDrive = DriveSubsystem.m_robotDrive;
-        addRequirements(m_robotDrive);
+        System.out.println("Starting AutoAlign Command - Will align to first valid tag (ID "
+                + MIN_VALID_TAG_ID + "-" + MAX_VALID_TAG_ID + ") seen.");
+        hasSeenValidTargetOnce = false; // Reset flag
+        timerLostTarget.reset();
+        timerLostTarget.start();
+        timerAtGoal.reset();
+        timerAtGoal.stop();
+
+        // Reset PIDs
+        distanceController.reset();
+        strafeController.reset();
+        rotationController.reset();
     }
 
     @Override
     public void execute() {
-        double tv = table.getEntry("tv").getDouble(0.0); // No units (1.0 if target is visible, 0.0 otherwise)
-        if (tv == 1.0) {
-            double tx = table.getEntry("tx").getDouble(0.0); // Degrees
-            double rotationOutput = rotationPID.calculate(tx); // Degrees
+        boolean targetVisible = LimelightHelpers.getTV(""); // Check if *any* tag is visible
+        double currentTagID = LimelightHelpers.getFiducialID(""); // Get ID of primary tag
 
-            double tid = table.getEntry("tid").getDouble(0.0); // ID number (no units)
-            double targetHeight = AprilTagHeightDB.getHeight(tid); // Meters
+        // Check if a tag is visible AND if its ID is within the valid range [6, 22]
+        boolean isValidTargetVisible = targetVisible
+                && currentTagID >= MIN_VALID_TAG_ID
+                && currentTagID <= MAX_VALID_TAG_ID;
 
-            if (targetHeight != -1) {
-                double distanceOutput = distancePID.calculate(calculateDistance(targetHeight)); // Meters/second
+        if (isValidTargetVisible) {
+            // We see a tag within the desired range
+            hasSeenValidTargetOnce = true; // Mark that we've seen a valid target
+            timerLostTarget.reset(); // Reset the lost target timer
 
-                // Deceleration zone
-                double currentDistance = calculateDistance(targetHeight); // Meters
-                double speedScale = Math.min(1.0, currentDistance / 1.0); // No units
-                distanceOutput *= speedScale; // Meters/second
+            // Get the robot's pose relative to the currently tracked valid tag
+            double[] botposeTargetSpace = LimelightHelpers.getBotPose_TargetSpace("");
 
-                rotationOutput = Math.max(Math.min(rotationOutput, 0.2), -0.2); // Radians/second
-                distanceOutput = Math.max(Math.min(distanceOutput, 0.2), -0.2); // Meters/second
+            // --- Calculate PID Outputs ---
+            // ** THESE SIGNS ARE CRITICAL - ADJUST BASED ON TESTING **
 
-                double ty = table.getEntry("ty").getDouble(0.0); // Degrees
-                double ta = table.getEntry("ta").getDouble(0.0); // Percentage of Limelight's FOV (no units)
+            double currentDistance = botposeTargetSpace[2];
+            // *** FIX 1: Flipping sign for xSpeed to correct driving away/towards ***
+            double xSpeed = distanceController.calculate(currentDistance); // Removed negative sign
+            // If robot *still* drives away, change back to -distanceController.calculate(...)
+            // and verify DriveSubsystem.drive() and Limelight Z-axis direction.
 
-                double headingOutput = headingPID.calculate(ty); // Degrees
+            double currentStrafe = botposeTargetSpace[0];
+            // *** FIX 2 (Try if needed): Adjust sign for ySpeed if strafing is reversed ***
+            double ySpeed = strafeController.calculate(currentStrafe);
+            // If robot strafes LEFT when it should go RIGHT, change to:
+            // double ySpeed = -strafeController.calculate(currentStrafe);
 
-                // Scale heading output based on target area
-                double headingScale = Math.min(1.0, ta / desiredTargetArea); // No units
-                headingOutput *= headingScale; // Degrees
+            double currentRotation = botposeTargetSpace[4];
+            // *** FIX 3 (Try if needed): Adjust sign for rotSpeed if rotation is reversed ***
+            double rotSpeed = -rotationController.calculate(currentRotation);
+            // If robot rotates CW when it should go CCW, change to:
+            // double rotSpeed = rotationController.calculate(currentRotation);
 
-                ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-                    distanceOutput, // Meters/second
-                    0.0, // Meters/second
-                    Math.toRadians(rotationOutput + headingOutput), // Radians/second
-                    m_swerve.getRotation2d() // Rotation2d (no units)
-                );
 
-                m_swerve.drive(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond, chassisSpeeds.omegaRadiansPerSecond, true);
+            // --- Limit Speeds (Same as before) ---
+            double maxDriveSpeed = 0.2;
+            double maxRotationSpeed = 0.1;
+            xSpeed = Math.max(-maxDriveSpeed, Math.min(maxDriveSpeed, xSpeed));
+            ySpeed = Math.max(-maxDriveSpeed, Math.min(maxDriveSpeed, ySpeed));
+            rotSpeed = Math.max(-maxRotationSpeed, Math.min(maxRotationSpeed, rotSpeed));
+
+            // --- Drive the Robot (Same as before) ---
+            m_robotDrive.drive(xSpeed, ySpeed, rotSpeed, false);
+
+            // --- Check if at Goal (Same as before) ---
+            if (distanceController.atSetpoint() && strafeController.atSetpoint() && rotationController.atSetpoint()) {
+                if (timerAtGoal.get() == 0) {
+                    timerAtGoal.reset();
+                    timerAtGoal.start();
+                }
             } else {
-                m_swerve.drive(0.0, 0.0, 0.0, false);
+                timerAtGoal.stop();
+                timerAtGoal.reset();
             }
+
+            // --- SmartDashboard Logging ---
+            SmartDashboard.putNumber("AutoAlign/CurrentValidTagID", currentTagID);
+            SmartDashboard.putBoolean("AutoAlign/ValidTargetVisible", true);
+            // Add Raw Pose Data for debugging axis directions:
+            SmartDashboard.putNumber("AutoAlign/RawPose_X (Strafe)", botposeTargetSpace[0]);
+            SmartDashboard.putNumber("AutoAlign/RawPose_Z (Distance)", botposeTargetSpace[2]);
+            SmartDashboard.putNumber("AutoAlign/RawPose_Yaw (Rotation)", botposeTargetSpace[4]);
+            // PID Inputs/Outputs:
+            SmartDashboard.putNumber("AutoAlign/CurrentDistance(Z)", currentDistance);
+            SmartDashboard.putNumber("AutoAlign/CurrentStrafe(X)", currentStrafe);
+            SmartDashboard.putNumber("AutoAlign/CurrentRotation(Yaw)", currentRotation);
+            SmartDashboard.putNumber("AutoAlign/PID_XSpeed", xSpeed);
+            SmartDashboard.putNumber("AutoAlign/PID_YSpeed", ySpeed);
+            SmartDashboard.putNumber("AutoAlign/PID_RotSpeed", rotSpeed);
+            // State Info:
+            SmartDashboard.putBoolean("AutoAlign/AtDistanceSetpoint", distanceController.atSetpoint());
+            SmartDashboard.putBoolean("AutoAlign/AtStrafeSetpoint", strafeController.atSetpoint());
+            SmartDashboard.putBoolean("AutoAlign/AtRotationSetpoint", rotationController.atSetpoint());
+            SmartDashboard.putNumber("AutoAlign/TimeAtGoal", timerAtGoal.get());
+
         } else {
-            m_swerve.drive(0.0, 0.0, 0.0, false);
+            // No valid target visible (either no tag, or tag ID outside 6-22 range)
+            SmartDashboard.putBoolean("AutoAlign/ValidTargetVisible", false);
+            if (targetVisible) { // Log the invalid tag ID if one is visible but out of range
+                 SmartDashboard.putNumber("AutoAlign/CurrentInvalidTagID", currentTagID);
+            } else {
+                 SmartDashboard.putNumber("AutoAlign/CurrentInvalidTagID", -1); // Indicate no tag visible at all
+            }
+
+            // Stop the robot
+            m_robotDrive.drive(0, 0, 0, false);
+
+            // Stop and reset the at-goal timer
+            timerAtGoal.stop();
+            timerAtGoal.reset();
+
+            // Let timerLostTarget run if we previously saw a valid target
         }
+        SmartDashboard.putNumber("AutoAlign/TimeSinceValidTargetLost", timerLostTarget.get());
     }
 
     @Override
     public boolean isFinished() {
-        double tv = table.getEntry("tv").getDouble(0.0); // No units
-        double tx = table.getEntry("tx").getDouble(0.0); // Degrees
-        double tid = table.getEntry("tid").getDouble(0.0); // ID number
-        double targetHeight = AprilTagHeightDB.getHeight(tid); // Meters
-        if (targetHeight == -1) {
-            return true;
+        // Finish successfully if we have been at the setpoint for the required time
+        boolean finishedAtGoal = timerAtGoal.hasElapsed(TIME_AT_GOAL_SECONDS);
+
+        // Finish unsuccessfully if we saw a *valid* target initially but then lost *any* valid target for too long
+        boolean finishedLostTarget = hasSeenValidTargetOnce && timerLostTarget.hasElapsed(LOST_TARGET_TIMEOUT_SECONDS);
+
+        if (finishedAtGoal) {
+             System.out.println("AutoAlign finished: Reached goal pose.");
+             return true;
+        }
+        if (finishedLostTarget) {
+            System.out.println("AutoAlign finished: Valid target lost for too long.");
+             return true;
         }
 
-        double distanceError = Math.abs(calculateDistance(targetHeight) - distancePID.getSetpoint()); // Meters
-        double ty = table.getEntry("ty").getDouble(0.0); // Degrees
-        double currentVelocity = Math.abs(m_swerve.getRobotRelativeSpeeds().vxMetersPerSecond); // Meters/second
-
-        return (Math.abs(tx) < rotationTolerance && distanceError < distanceTolerance && Math.abs(ty) < headingTolerance && currentVelocity < 0.05) || tv == 0.0; // Reduced tolerance and added velocity check
+        return false; // Keep running otherwise
     }
 
     @Override
     public void end(boolean interrupted) {
-        m_swerve.drive(0.0, 0.0, 0.0, false);
+        m_robotDrive.drive(0, 0, 0, false); // Stop the robot
+        timerAtGoal.stop();
+        timerLostTarget.stop();
+        System.out.println("AutoAlign Command ended. Interrupted: " + interrupted);
     }
-
-    private double calculateDistance(double targetHeight) {
-        double ty = table.getEntry("ty").getDouble(0.0); // Degrees
-        double angleToTarget = ty + limelightAngle; // Degrees
-        double distance = (targetHeight - limelightHeight) / Math.tan(Math.toRadians(angleToTarget)); // Meters
-        System.out.println("Calculated Distance: " + distance); // Meters
-        return distance; // Meters
-    }
-        */
+}

@@ -19,8 +19,7 @@ import edu.wpi.first.math.util.Units;
  */
 public final class Constants {
 
-    
-      public static final class CoralSubsystemConstants {
+  public static final class CoralSubsystemConstants {
     public static final int kElevatorMotorCanId = 10;
     public static final int kArmMotorCanId = 11;
     public static final int kIntakeMotorCanId = 12;
@@ -34,11 +33,11 @@ public final class Constants {
     }
 
     public static final class ArmSetpoints {
-      public static final double kFeederStation = 34;
+      public static final double kFeederStation = -10;
       public static final double kLevel1 = 0;
-      public static final double kLevel2 = 3;
-      public static final double kLevel3 = 3;
-      public static final double kLevel4 = 1;
+      public static final double kLevel2 = -40;
+      public static final double kLevel3 = -40;
+      public static final double kLevel4 = -40;
     }
 
     public static final class IntakeSetpoints {
@@ -52,9 +51,9 @@ public final class Constants {
     public static final int kPivotMotorCanId = 14;
 
     public static final class ArmSetpoints {
-      public static final double kStow = 18.5;
-      public static final double kHold = 11.5;
-      public static final double kDown = 0;
+      public static final double kStow = 0;
+      public static final double kHold = -5.5;
+      public static final double kDown = -18.5;
     }
 
     public static final class IntakeSetpoints {
@@ -89,15 +88,15 @@ public final class Constants {
     public static final double kBackRightChassisAngularOffset = Math.PI / 2;
 
     // SPARK MAX CAN IDs
-    public static final int kFrontLeftDrivingCanId = 3;
-    public static final int kRearLeftDrivingCanId = 5;
-    public static final int kFrontRightDrivingCanId = 1;
-    public static final int kRearRightDrivingCanId = 7;
+    public static final int kFrontLeftDrivingCanId = 7;
+    public static final int kRearLeftDrivingCanId = 1;
+    public static final int kFrontRightDrivingCanId = 5;
+    public static final int kRearRightDrivingCanId = 3;
 
-    public static final int kFrontLeftTurningCanId = 4;
-    public static final int kRearLeftTurningCanId = 6;
-    public static final int kFrontRightTurningCanId = 2;
-    public static final int kRearRightTurningCanId = 8;
+    public static final int kFrontLeftTurningCanId = 8;
+    public static final int kRearLeftTurningCanId = 2;
+    public static final int kFrontRightTurningCanId = 6;
+    public static final int kRearRightTurningCanId = 4;
 
     public static final boolean kGyroReversed = false;
   }
@@ -128,13 +127,13 @@ public final class Constants {
 
   public static final class AutoConstants {
     public static final TrapezoidProfile.Constraints kXControllerConstraints =
-    new TrapezoidProfile.Constraints(
-        DriveConstants.kMaxSpeedMetersPerSecond * 0.8, // Max velocity (e.g., 80% of robot max)
-        DriveConstants.kMaxSpeedMetersPerSecond * 1.5); // Max acceleration (tune this)
-public static final TrapezoidProfile.Constraints kYControllerConstraints =
-    new TrapezoidProfile.Constraints(
-        DriveConstants.kMaxSpeedMetersPerSecond * 0.8, // Max velocity
-        DriveConstants.kMaxSpeedMetersPerSecond * 1.5); // Max acceleration
+        new TrapezoidProfile.Constraints(
+            DriveConstants.kMaxSpeedMetersPerSecond * 0.8, // Max velocity (e.g., 80% of robot max)
+            DriveConstants.kMaxSpeedMetersPerSecond * 1.5); // Max acceleration (tune this)
+    public static final TrapezoidProfile.Constraints kYControllerConstraints =
+        new TrapezoidProfile.Constraints(
+            DriveConstants.kMaxSpeedMetersPerSecond * 0.8, // Max velocity
+            DriveConstants.kMaxSpeedMetersPerSecond * 1.5); // Max acceleration
 
     public static final double kMaxSpeedMetersPerSecond = 3;
     public static final double kMaxAccelerationMetersPerSecondSquared = 3;

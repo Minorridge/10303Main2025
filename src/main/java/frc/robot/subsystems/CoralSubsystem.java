@@ -62,8 +62,8 @@ public class CoralSubsystem extends SubsystemBase {
   // Member variables for subsystem state management
   private boolean wasResetByButton = false;
   private boolean wasResetByLimit = false;
-  private double armCurrentTarget = ArmSetpoints.kFeederStation;
-  private double elevatorCurrentTarget = ElevatorSetpoints.kFeederStation;
+  private double armCurrentTarget = ArmSetpoints.kLevel1;
+  private double elevatorCurrentTarget = ElevatorSetpoints.kLevel1;
 
   // Simulation setup and variables
   private DCMotor elevatorMotorModel = DCMotor.getNeoVortex(1);

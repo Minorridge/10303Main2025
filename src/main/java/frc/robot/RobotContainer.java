@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -17,11 +19,8 @@ import frc.robot.subsystems.CoralSubsystem;
 import frc.robot.subsystems.CoralSubsystem.Setpoint;
 import frc.robot.subsystems.DriveSubsystem;
 
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.auto.NamedCommands;
-
 public class RobotContainer {
-    
+
   private final SendableChooser<Command> autoChooser;
   private final DriveSubsystem m_robotDrive = new DriveSubsystem();
   private final CoralSubsystem m_coralSubSystem = new CoralSubsystem();
@@ -31,10 +30,12 @@ public class RobotContainer {
       new CommandXboxController(OIConstants.kDriverControllerPort);
 
   public RobotContainer() {
-         NamedCommands.registerCommand("level3", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel3));
-         NamedCommands.registerCommand("Feeder", m_coralSubSystem.setSetpointCommand(Setpoint.kFeederStation));
-         NamedCommands.registerCommand("RunCoralIntake", m_coralSubSystem.runIntakeCommand().withTimeout(2));
-         NamedCommands.registerCommand("ReverseCoralIntake", m_coralSubSystem.reverseIntakeCommand().withTimeout(2));
+    NamedCommands.registerCommand("L2", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel2).withTimeout(4));
+    NamedCommands.registerCommand("Feeder", m_coralSubSystem.setSetpointCommand(Setpoint.kFeederStation));
+    NamedCommands.registerCommand(
+        "RunCoralIntake", m_coralSubSystem.runIntakeCommand().withTimeout(2));
+    NamedCommands.registerCommand(
+        "ReverseCoralIntake", m_coralSubSystem.reverseIntakeCommand().withTimeout(2));
     // Build an auto chooser. This will use Commands.none() as the default option.
     autoChooser = AutoBuilder.buildAutoChooser();
 
@@ -59,8 +60,6 @@ public class RobotContainer {
             m_robotDrive));
 
     m_algaeSubsystem.setDefaultCommand(m_algaeSubsystem.idleCommand());
-
-    
   }
 
   private void configureButtonBindings() {
@@ -83,20 +82,17 @@ public class RobotContainer {
         .leftTrigger(OIConstants.kTriggerButtonThreshold)
         .whileTrue(m_algaeSubsystem.reverseIntakeCommand());
     m_driverController.start().onTrue(m_robotDrive.zeroHeadingCommand());
-    // Left Bumper -> Run command to auto-align robot chassis according to AprilTag 
-    m_driverController.povDown().onTrue(new AutoAlign(true, m_robotDrive).withTimeout(3));
-
+    // Left Bumper -> Run command to auto-align robot chassis according to AprilTag
+    m_driverController.povDown().onTrue(new AutoAlign(m_robotDrive).withTimeout(3));
   }
 
-  public double getSimulationTotalCurrentDraw() {
-    return m_coralSubSystem.getSimulationCurrentDraw()
-        + m_algaeSubsystem.getSimulationCurrentDraw();
-  }
+
 
   public DriveSubsystem getDriveSubsystem() {
     return m_robotDrive;
-}
-public Command getAutonomousCommand() {
+  }
+
+  public Command getAutonomousCommand() {
     return autoChooser.getSelected();
   }
 }
