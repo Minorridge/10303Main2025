@@ -9,6 +9,7 @@ import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.wpilibj.RobotController;
@@ -25,7 +26,7 @@ public class AlgaeSubsystem extends SubsystemBase {
   private RelativeEncoder armEncoder = armMotor.getEncoder();
 
   // Initialize intake SPARK. We will use open loop control for this so we don't need a closed loop controller like above.
-  private SparkMax intakeMotor = new SparkMax(AlgaeSubsystemConstants.kIntakeMotorCanId, MotorType.kBrushless);
+  private SparkFlex intakeMotor = new SparkFlex(AlgaeSubsystemConstants.kIntakeMotorCanId, MotorType.kBrushless);
 
   // Member variables for subsystem state management
   private boolean stowWhenIdle = true;
