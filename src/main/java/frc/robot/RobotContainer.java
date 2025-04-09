@@ -7,13 +7,15 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import frc.robot.commands.AlignToDynamicReefTagCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.OIConstants;
-import frc.robot.commands.AutoAlign;
 import frc.robot.subsystems.AlgaeSubsystem;
 import frc.robot.subsystems.CoralSubsystem;
 import frc.robot.subsystems.CoralSubsystem.Setpoint;
@@ -28,6 +30,15 @@ public class RobotContainer {
 
   CommandXboxController m_driverController =
       new CommandXboxController(OIConstants.kDriverControllerPort);
+    // ---> DEFINE YOUR DESIRED ROBOT OFFSET RELATIVE TO THE TAG <---
+    // Example: 0.5m directly forward (+X) from tag center, facing tag (180 deg)
+    // ** Adjust X distance (0.5) and Angle (180.0) as needed for your robot/game **
+    private final Pose2d ROBOT_OFFSET_FROM_TAG =
+        new Pose2d(0.4, 0.0, Rotation2d.fromDegrees(180.0));
+         // ---> INSTANTIATE THE COMMAND <---
+    // Pass in the drive subsystem, Limelight name, and the desired offset
+    private final AlignToDynamicReefTagCommand m_alignToReefCommand =
+        new AlignToDynamicReefTagCommand(m_robotDrive, "limelight", ROBOT_OFFSET_FROM_TAG);
 
   public RobotContainer() {
     NamedCommands.registerCommand("L2", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel2).withTimeout(4));
@@ -82,8 +93,8 @@ public class RobotContainer {
         .leftTrigger(OIConstants.kTriggerButtonThreshold)
         .whileTrue(m_algaeSubsystem.reverseIntakeCommand());
     m_driverController.start().onTrue(m_robotDrive.zeroHeadingCommand());
-    // Left Bumper -> Run command to auto-align robot chassis according to AprilTag
-    m_driverController.povDown().onTrue(new AutoAlign(m_robotDrive).withTimeout(3));
+    m_driverController.povDown().onTrue(m_alignToReefCommand);
+
   }
 
 
