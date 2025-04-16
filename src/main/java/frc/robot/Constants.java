@@ -4,6 +4,10 @@
 
 package frc.robot;
 
+import java.util.Map;
+
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
@@ -19,6 +23,49 @@ import edu.wpi.first.math.util.Units;
  */
 public final class Constants {
 
+    public static final class AprilTagConstants {
+        // Conversion factor
+        // private static final double INCHES_TO_METERS = Units.inchesToMeters(1.0); // Defined if not elsewhere
+
+        // --- AprilTag Field Poses (Speaker Tags Only) ---
+        // Assumes Blue Alliance Origin, X towards Red Alliance, Y towards left
+        // ** VERIFY these coordinates and rotations match the official field layout **
+
+        // ---- Blue Alliance reef ----
+        public static final Pose2d TAG_6_POSE = new Pose2d(Units.inchesToMeters(530.49), Units.inchesToMeters(130.17), Rotation2d.fromDegrees(300.0));
+        public static final Pose2d TAG_7_POSE = new Pose2d(Units.inchesToMeters(546.87), Units.inchesToMeters(158.50), Rotation2d.fromDegrees(0.0));   // Blue Center Speaker
+        public static final Pose2d TAG_8_POSE = new Pose2d(Units.inchesToMeters(530.49), Units.inchesToMeters(186.83), Rotation2d.fromDegrees(60.0));
+        public static final Pose2d TAG_9_POSE = new Pose2d(Units.inchesToMeters(497.77), Units.inchesToMeters(186.83), Rotation2d.fromDegrees(120.0));
+        public static final Pose2d TAG_10_POSE = new Pose2d(Units.inchesToMeters(481.39), Units.inchesToMeters(158.50), Rotation2d.fromDegrees(180.0)); // Blue Center Stage-facing side
+        public static final Pose2d TAG_11_POSE = new Pose2d(Units.inchesToMeters(497.77), Units.inchesToMeters(130.17), Rotation2d.fromDegrees(240.0));
+
+        // ---- Red Alliance reef-
+        public static final Pose2d TAG_17_POSE = new Pose2d(Units.inchesToMeters(160.39), Units.inchesToMeters(130.17), Rotation2d.fromDegrees(240.0)); // Verify Z-Rot (using symmetry)
+        public static final Pose2d TAG_18_POSE = new Pose2d(Units.inchesToMeters(144.00), Units.inchesToMeters(158.50), Rotation2d.fromDegrees(180.0)); // Red Center Speaker
+        public static final Pose2d TAG_19_POSE = new Pose2d(Units.inchesToMeters(160.39), Units.inchesToMeters(186.83), Rotation2d.fromDegrees(120.0));
+        public static final Pose2d TAG_20_POSE = new Pose2d(Units.inchesToMeters(193.10), Units.inchesToMeters(186.83), Rotation2d.fromDegrees(60.0));
+        public static final Pose2d TAG_21_POSE = new Pose2d(Units.inchesToMeters(209.49), Units.inchesToMeters(158.50), Rotation2d.fromDegrees(0.0));   // Red Center Stage-facing side? Verify Z-Rot
+        public static final Pose2d TAG_22_POSE = new Pose2d(Units.inchesToMeters(193.10), Units.inchesToMeters(130.17), Rotation2d.fromDegrees(300.0));
+
+
+        // Map to easily retrieve poses by ID (Only Speaker Tags)
+        public static final Map<Integer, Pose2d> TAG_FIELD_POSES = Map.ofEntries(
+            // Blue Speaker
+            Map.entry(6, TAG_6_POSE),
+            Map.entry(7, TAG_7_POSE),
+            Map.entry(8, TAG_8_POSE),
+            Map.entry(9, TAG_9_POSE),
+            Map.entry(10, TAG_10_POSE),
+            Map.entry(11, TAG_11_POSE),
+            // Red Speaker
+            Map.entry(17, TAG_17_POSE),
+            Map.entry(18, TAG_18_POSE),
+            Map.entry(19, TAG_19_POSE),
+            Map.entry(20, TAG_20_POSE),
+            Map.entry(21, TAG_21_POSE),
+            Map.entry(22, TAG_22_POSE)
+        );
+    }
   public static final class CoralSubsystemConstants {
     public static final int kElevatorMotorCanId = 10;
     public static final int kArmMotorCanId = 11;
@@ -52,8 +99,8 @@ public final class Constants {
 
     public static final class ArmSetpoints {
       public static final double kStow = 0;
-      public static final double kHold = -5.5;
-      public static final double kDown = -18.5;
+      public static final double kHold = -4.5;
+      public static final double kDown = -8.5;
     }
 
     public static final class IntakeSetpoints {
