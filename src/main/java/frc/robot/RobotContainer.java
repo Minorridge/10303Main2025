@@ -3,9 +3,6 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot;
-
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -23,7 +20,6 @@ import frc.robot.subsystems.DriveSubsystem;
 
 public class RobotContainer {
 
-  private final SendableChooser<Command> autoChooser;
   private final DriveSubsystem m_robotDrive = new DriveSubsystem();
   private final CoralSubsystem m_coralSubSystem = new CoralSubsystem();
   private final AlgaeSubsystem m_algaeSubsystem = new AlgaeSubsystem();
@@ -41,20 +37,7 @@ public class RobotContainer {
         new AlignToDynamicReefTagCommand(m_robotDrive, "limelight", ROBOT_OFFSET_FROM_TAG);
 
   public RobotContainer() {
-    NamedCommands.registerCommand("L2", m_coralSubSystem.setSetpointCommand(Setpoint.kLevel2).withTimeout(4));
-    NamedCommands.registerCommand("Feeder", m_coralSubSystem.setSetpointCommand(Setpoint.kFeederStation));
-    NamedCommands.registerCommand(
-        "RunCoralIntake", m_coralSubSystem.runIntakeCommand().withTimeout(2));
-    NamedCommands.registerCommand(
-        "ReverseCoralIntake", m_coralSubSystem.reverseIntakeCommand().withTimeout(2));
-    // Build an auto chooser. This will use Commands.none() as the default option.
-    autoChooser = AutoBuilder.buildAutoChooser();
-
-    // Another option that allows you to specify the default auto by its name
-    // autoChooser = AutoBuilder.buildAutoChooser("My Default Auto");
-
-    SmartDashboard.putData("Auto Chooser", autoChooser);
-    // Configure the button bindings
+  
     configureButtonBindings();
 
     m_robotDrive.setDefaultCommand(
@@ -103,7 +86,4 @@ public class RobotContainer {
     return m_robotDrive;
   }
 
-  public Command getAutonomousCommand() {
-    return autoChooser.getSelected();
-  }
 }
